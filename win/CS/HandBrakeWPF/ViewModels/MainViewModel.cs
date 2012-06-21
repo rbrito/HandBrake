@@ -14,7 +14,6 @@ namespace HandBrakeWPF.ViewModels
     using System.ComponentModel;
     using System.ComponentModel.Composition;
     using System.Diagnostics;
-    using System.Drawing;
     using System.IO;
     using System.Linq;
     using System.Windows;
@@ -24,7 +23,6 @@ namespace HandBrakeWPF.ViewModels
     using Caliburn.Micro;
 
     using HandBrake.ApplicationServices;
-    using HandBrake.ApplicationServices.Exceptions;
     using HandBrake.ApplicationServices.Model;
     using HandBrake.ApplicationServices.Model.Encoding;
     using HandBrake.ApplicationServices.Parsing;
@@ -32,6 +30,7 @@ namespace HandBrakeWPF.ViewModels
     using HandBrake.ApplicationServices.Utilities;
 
     using HandBrakeWPF.Helpers;
+    using HandBrakeWPF.Model;
     using HandBrakeWPF.ViewModels.Interfaces;
 
     using Ookii.Dialogs.Wpf;
@@ -72,6 +71,11 @@ namespace HandBrakeWPF.ViewModels
         /// The Error Service Backing field.
         /// </summary>
         private readonly IErrorService errorService;
+
+        /// <summary>
+        /// The Shell View Model
+        /// </summary>
+        private readonly IShellViewModel shellViewModel;
 
         /// <summary>
         /// Backing field for the user setting service.
@@ -157,14 +161,18 @@ namespace HandBrakeWPF.ViewModels
         /// <param name="errorService">
         /// The Error Service
         /// </param>
+        /// <param name="shellViewModel">
+        /// The shell View Model.
+        /// </param>
         [ImportingConstructor]
         public MainViewModel(IWindowManager windowManager, IUserSettingService userSettingService, IScan scanService, IEncode encodeService, IPresetService presetService,
-            IErrorService errorService)
+            IErrorService errorService, IShellViewModel shellViewModel)
         {
             this.scanService = scanService;
             this.encodeService = encodeService;
             this.presetService = presetService;
             this.errorService = errorService;
+            this.shellViewModel = shellViewModel;
             this.userSettingService = userSettingService;
             this.queueProcessor = IoC.Get<IQueueProcessor>(); // TODO Instance ID!
 
@@ -177,10 +185,9 @@ namespace HandBrakeWPF.ViewModels
             this.scanService.ScanStared += this.ScanStared;
             this.scanService.ScanCompleted += this.ScanCompleted;
             this.scanService.ScanStatusChanged += this.ScanStatusChanged;
-
+            this.queueProcessor.JobProcessingStarted += this.QueueProcessorJobProcessingStarted;
             this.queueProcessor.QueueCompleted += this.QueueCompleted;
             this.queueProcessor.QueuePaused += this.QueuePaused;
-            this.queueProcessor.EncodeService.EncodeStarted += this.EncodeStarted;
             this.queueProcessor.EncodeService.EncodeStatusChanged += this.EncodeStatusChanged;
 
             this.Presets = this.presetService.Presets;
@@ -294,7 +301,6 @@ namespace HandBrakeWPF.ViewModels
                 fileMenuItem.Click += this.fileMenuItem_Click;
                 menuItems.Add(fileMenuItem);
 
-
                 // File Menu Item
                 MenuItem titleSpecific = new MenuItem { Header = new TextBlock { Text = "Title Specific Scan", Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center } };
 
@@ -354,6 +360,13 @@ namespace HandBrakeWPF.ViewModels
 
                 if (this.SelectedPreset != null)
                 {
+                    // Main Window Settings
+                    this.CurrentTask.LargeFile = selectedPreset.Task.LargeFile;
+                    this.CurrentTask.OptimizeMP4 = selectedPreset.Task.OptimizeMP4;
+                    this.CurrentTask.IPod5GSupport = selectedPreset.Task.IPod5GSupport;
+                    this.SelectedOutputFormat = selectedPreset.Task.OutputFormat;
+
+                    // Tab Settings
                     this.PictureSettingsViewModel.SetPreset(this.SelectedPreset, this.CurrentTask);
                     this.VideoViewModel.SetPreset(this.SelectedPreset, this.CurrentTask);
                     this.FiltersViewModel.SetPreset(this.SelectedPreset, this.CurrentTask);
@@ -778,6 +791,9 @@ namespace HandBrakeWPF.ViewModels
                     this.errorService.ShowMessageBox("HandBrake has determined your built-in presets are out of date... These presets will now be updated.",
                                     "Preset Update", MessageBoxButton.OK, MessageBoxImage.Information);
 
+            // Queue Recovery
+            QueueRecoveryHelper.RecoverQueue(this.queueProcessor, this.errorService);
+
             this.SelectedPreset = this.presetService.DefaultPreset;
         }
 
@@ -793,7 +809,7 @@ namespace HandBrakeWPF.ViewModels
 
             this.queueProcessor.QueueCompleted -= this.QueueCompleted;
             this.queueProcessor.QueuePaused -= this.QueuePaused;
-            this.queueProcessor.EncodeService.EncodeStarted -= this.EncodeStarted;
+            this.queueProcessor.JobProcessingStarted -= this.QueueProcessorJobProcessingStarted;
             this.queueProcessor.EncodeService.EncodeStatusChanged -= this.EncodeStatusChanged;
         }
 
@@ -836,7 +852,7 @@ namespace HandBrakeWPF.ViewModels
         /// </summary>
         public void OpenOptionsWindow()
         {
-            this.WindowManager.ShowWindow(IoC.Get<IOptionsViewModel>());
+            this.shellViewModel.DisplayWindow(ShellWindow.OptionsWindow);
         }
 
         /// <summary>
@@ -892,11 +908,7 @@ namespace HandBrakeWPF.ViewModels
                 return;
             }
 
-            QueueTask task = new QueueTask
-                                 {
-                                     Task = new EncodeTask(this.CurrentTask),
-                                     Query = QueryGeneratorUtility.GenerateQuery(new EncodeTask(this.CurrentTask))
-                                 };
+            QueueTask task = new QueueTask { Task = new EncodeTask(this.CurrentTask) };
             this.queueProcessor.QueueManager.Add(task);
 
             if (!this.IsEncoding)
@@ -1042,10 +1054,9 @@ namespace HandBrakeWPF.ViewModels
             }
 
             // Create the Queue Task and Start Processing
-            QueueTask task = new QueueTask(null)
+            QueueTask task = new QueueTask
                 {
                     Task = new EncodeTask(this.CurrentTask),
-                    Query = QueryGeneratorUtility.GenerateQuery(new EncodeTask(this.CurrentTask)),
                     CustomQuery = false
                 };
             this.queueProcessor.QueueManager.Add(task);
@@ -1123,8 +1134,18 @@ namespace HandBrakeWPF.ViewModels
                     Filter = "mp4|*.mp4;*.m4v|mkv|*.mkv",
                     AddExtension = true,
                     OverwritePrompt = true,
-                    DefaultExt = ".mp4"
+                    DefaultExt = ".mp4",
                 };
+
+            if (this.CurrentTask != null && !string.IsNullOrEmpty(this.CurrentTask.Destination))
+            {
+                if (Directory.Exists(Path.GetDirectoryName(this.CurrentTask.Destination)))
+                {
+                    dialog.InitialDirectory = Path.GetDirectoryName(this.CurrentTask.Destination) + "\\";
+                    dialog.FileName = Path.GetFileName(this.CurrentTask.Destination);
+                }
+            }
+
             dialog.ShowDialog();
 
             if (!string.IsNullOrEmpty(dialog.FileName))
@@ -1199,7 +1220,7 @@ namespace HandBrakeWPF.ViewModels
 
             if (!string.IsNullOrEmpty(filename))
             {
-                Preset preset = PlistPresetHandler.Import(filename);
+                Preset preset = PlistUtility.Import(filename);
                 if (this.presetService.CheckIfPresetExists(preset.Name))
                 {
                     if (!presetService.CanUpdatePreset(preset.Name))
@@ -1245,7 +1266,7 @@ namespace HandBrakeWPF.ViewModels
 
                 if (filename != null)
                 {
-                    PlistPresetHandler.Export(savefiledialog.FileName, this.selectedPreset);
+                    PlistUtility.Export(savefiledialog.FileName, this.selectedPreset);
                 }
             }
             else
@@ -1262,27 +1283,6 @@ namespace HandBrakeWPF.ViewModels
             this.presetService.UpdateBuiltInPresets();
             this.NotifyOfPropertyChange("Presets");
             this.SelectedPreset = this.presetService.DefaultPreset;
-        }
-
-        /// <summary>
-        /// Set the selected preset.
-        /// </summary>
-        /// <param name="e">
-        /// The RoutedPropertyChangedEventArgs.
-        /// </param>
-        public void SetSelectedPreset(RoutedPropertyChangedEventArgs<object> e)
-        {
-            this.SelectedPreset = e.NewValue as Preset;
-        }
-
-        /// <summary>
-        /// Show Release Notes
-        /// </summary>
-        public void ShowReleaseNotes()
-        {
-            string path =
-                Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
-            Process.Start(path + "\\releasenotes.html");
         }
 
         #endregion
@@ -1493,22 +1493,22 @@ namespace HandBrakeWPF.ViewModels
         }
 
         /// <summary>
-        /// Encode Started Handler
+        /// Handle the Queue Starting Event
         /// </summary>
         /// <param name="sender">
-        /// The Sender
+        /// The sender.
         /// </param>
         /// <param name="e">
-        /// The EventArgs
+        /// The e.
         /// </param>
-        private void EncodeStarted(object sender, EventArgs e)
+        void QueueProcessorJobProcessingStarted(object sender, HandBrake.ApplicationServices.EventArgs.QueueProgressEventArgs e)
         {
             Execute.OnUIThread(
-                () =>
-                {
-                    this.StatusLabel = "Preparing to encode ...";
-                    this.IsEncoding = true;
-                });
+               () =>
+               {
+                   this.StatusLabel = "Preparing to encode ...";
+                   this.IsEncoding = true;
+               });
 
             // TODO Handle Updating the UI
         }

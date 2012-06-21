@@ -1,7 +1,11 @@
-﻿/*  EncodeBase.cs $
-    This file is part of the HandBrake source code.
-    Homepage: <http://handbrake.fr>.
-    It may be used under the terms of the GNU General Public License. */
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="EncodeBase.cs" company="HandBrake Project (http://handbrake.fr)">
+//   This file is part of the HandBrake source code - It may be used under the terms of the GNU General Public License.
+// </copyright>
+// <summary>
+//   A Base Class for the Encode Services.
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
 
 namespace HandBrake.ApplicationServices.Services.Base
 {
@@ -253,8 +257,9 @@ namespace HandBrake.ApplicationServices.Services.Base
 
             try
             {
+                string query = QueryGeneratorUtility.GenerateQuery(new EncodeTask(encodeQueueTask.Task));
                 this.logBuffer = new StringBuilder();
-                this.logBuffer.AppendLine(String.Format("CLI Query: {0}", encodeQueueTask.Query));
+                this.logBuffer.AppendLine(String.Format("CLI Query: {0}", query));
                 this.logBuffer.AppendLine(String.Format("User Query: {0}", encodeQueueTask.CustomQuery));
                 this.logBuffer.AppendLine();
 
@@ -271,7 +276,7 @@ namespace HandBrake.ApplicationServices.Services.Base
 
                 this.fileWriter = new StreamWriter(logFile) { AutoFlush = true };
                 this.fileWriter.WriteLine(GeneralUtilities.CreateCliLogHeader());
-                this.fileWriter.WriteLine(String.Format("CLI Query: {0}", encodeQueueTask.Query));
+                this.fileWriter.WriteLine(String.Format("CLI Query: {0}", query));
                 this.fileWriter.WriteLine(String.Format("User Query: {0}", encodeQueueTask.CustomQuery));
                 this.fileWriter.WriteLine();
             }

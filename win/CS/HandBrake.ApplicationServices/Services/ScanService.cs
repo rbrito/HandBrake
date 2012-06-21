@@ -1,7 +1,11 @@
-﻿/*  Scan.cs $
-    This file is part of the HandBrake source code.
-    Homepage: <http://handbrake.fr>.
-    It may be used under the terms of the GNU General Public License. */
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="ScanService.cs" company="HandBrake Project (http://handbrake.fr)">
+//   This file is part of the HandBrake source code - It may be used under the terms of the GNU General Public License.
+// </copyright>
+// <summary>
+//   Scan a Source
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
 
 namespace HandBrake.ApplicationServices.Services
 {
@@ -240,9 +244,9 @@ namespace HandBrake.ApplicationServices.Services
                     extraArguments += " --scan ";
                 }
 
-                // Quick fix for "F:\\" style paths. Just get rid of the \\ so the CLI doesn't fall over.
-                // Sould probably clean up the escaping of the strings later.
-                string source = sourcePath.ToString().EndsWith("\\") ? sourcePath.ToString() : "\"" + sourcePath + "\"";
+                // Quick fix for "F:\\" style paths. We need \\\\ (Escaped \ twice)
+                string source = sourcePath.ToString().EndsWith("\\") ? string.Format("\"{0}\\\\\"", sourcePath.ToString().TrimEnd('\\'))
+                                : "\"" + sourcePath + "\"";
                 string query = string.Format(@" -i {0} -t{1} {2} -v ", source, title, extraArguments);
 
                 this.hbProc = new Process

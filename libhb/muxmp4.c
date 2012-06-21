@@ -1,8 +1,11 @@
-/* $Id: muxmp4.c,v 1.24 2005/11/04 13:09:41 titer Exp $
+/* muxmp4.c
 
-   This file is part of the HandBrake source code.
+   Copyright (c) 2003-2012 HandBrake Team
+   This file is part of the HandBrake source code
    Homepage: <http://handbrake.fr/>.
-   It may be used under the terms of the GNU General Public License. */
+   It may be used under the terms of the GNU General Public License v2.
+   For full terms see the file COPYING file or visit http://www.gnu.org/licenses/gpl-2.0.html
+ */
 
 #include "mp4v2/mp4v2.h"
 #include "a52dec/a52.h"
@@ -410,17 +413,17 @@ static int MP4Init( hb_mux_object_t * m )
                         audio_type = 0xA9;
                     } break;
                 }
-                if( audio->config.out.codec & HB_ACODEC_PASS_FLAG )
+                if (audio->config.out.codec & HB_ACODEC_PASS_FLAG)
                 {
                     samplerate = audio->config.in.samplerate;
                     samples_per_frame = audio->config.in.samples_per_frame;
-                    channels = HB_INPUT_CH_LAYOUT_GET_DISCRETE_COUNT( audio->config.in.channel_layout );
+                    channels = av_get_channel_layout_nb_channels(audio->config.in.channel_layout);
                 }
                 else
                 {
                     samplerate = audio->config.out.samplerate;
                     samples_per_frame = audio->config.out.samples_per_frame;
-                    channels = hb_mixdown_get_discrete_channel_count( audio->config.out.mixdown );
+                    channels = hb_mixdown_get_discrete_channel_count(audio->config.out.mixdown);
                 }
                 mux_data->track = MP4AddAudioTrack( m->file, samplerate, 
                                                 samples_per_frame, audio_type );

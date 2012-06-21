@@ -1,9 +1,11 @@
-/* $Id: downmix.h,v 1.51 2005/11/04 13:09:40 stebbins Exp $
+/* downmix.h
 
-   This file is part of the HandBrake source code.
+   Copyright (c) 2003-2012 HandBrake Team
+   This file is part of the HandBrake source code
    Homepage: <http://handbrake.fr/>.
-   It may be used under the terms of the GNU General Public License. */
-
+   It may be used under the terms of the GNU General Public License v2.
+   For full terms see the file COPYING file or visit http://www.gnu.org/licenses/gpl-2.0.html
+ */
 #ifndef DOWNMIX_H
 #define DOWNMIX_H
 
@@ -55,12 +57,11 @@ void hb_downmix_set_chan_map(
     hb_chan_map_t * map_in, 
     hb_chan_map_t * map_out );
 void hb_downmix( hb_downmix_t * downmix, hb_sample_t * dst, hb_sample_t * src, int nsamples);
-void hb_layout_remap( 
-    hb_chan_map_t * map_in, 
-    hb_chan_map_t * map_out, 
-    int layout, 
-    hb_sample_t * samples, 
-    int nsamples );
+void hb_layout_remap(hb_chan_map_t *map_in,
+                     hb_chan_map_t *map_out,
+                     uint64_t layout,
+                     hb_sample_t *samples,
+                     int nsamples);
 int hb_need_downmix( int layout, int mixdown );
 
 #endif /* DOWNMIX_H */

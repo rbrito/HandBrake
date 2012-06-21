@@ -70,28 +70,26 @@ static NSMutableArray *masterBitRateArray = nil;
 {
     if ([HBAudio class] == self)
     {
-        int i, audioMustMatch, shouldAdd;
+        int i, audioMustMatch;
         BOOL muxMKV, muxMP4;
         NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
         NSDictionary *dict;
 
         masterCodecArray = [[NSMutableArray alloc] init]; // knowingly leaked
-        for( i = 0; i < hb_audio_encoders_count; i++ )
+        for (i = 0; i < hb_audio_encoders_count; i++)
         {
-            if( ( hb_audio_encoders[i].encoder & HB_ACODEC_PASS_FLAG ) &&
-                ( hb_audio_encoders[i].encoder != HB_ACODEC_AUTO_PASS ) )
+            if ((hb_audio_encoders[i].encoder & HB_ACODEC_PASS_FLAG) &&
+                (hb_audio_encoders[i].encoder != HB_ACODEC_AUTO_PASS))
             {
-                audioMustMatch = ( hb_audio_encoders[i].encoder & ~HB_ACODEC_PASS_FLAG );
+                audioMustMatch = (hb_audio_encoders[i].encoder & ~HB_ACODEC_PASS_FLAG);
             }
             else
             {
                 audioMustMatch = 0;
             }
-            // don't add HE-AAC encoder if it's unavailable
-            shouldAdd = ( hb_audio_encoders[i].encoder != HB_ACODEC_CA_HAAC ) || encca_haac_available();
-            muxMKV = ( hb_audio_encoders[i].muxers & HB_MUX_MKV ) ? YES : NO;
-            muxMP4 = ( hb_audio_encoders[i].muxers & HB_MUX_MP4 ) ? YES : NO;
-            if( shouldAdd && audioMustMatch )
+            muxMKV = (hb_audio_encoders[i].muxers & HB_MUX_MKV) ? YES : NO;
+            muxMP4 = (hb_audio_encoders[i].muxers & HB_MUX_MP4) ? YES : NO;
+            if (audioMustMatch)
             {
                 [masterCodecArray addObject: [NSDictionary dictionaryWithObjectsAndKeys:
                                               [NSString stringWithUTF8String: hb_audio_encoders[i].human_readable_name], keyAudioCodecName,
@@ -101,7 +99,7 @@ static NSMutableArray *masterBitRateArray = nil;
                                               [NSNumber numberWithInt: audioMustMatch], keyAudioMustMatchTrack,
                                               nil]];
             }
-            else if( shouldAdd )
+            else
             {
                 [masterCodecArray addObject: [NSDictionary dictionaryWithObjectsAndKeys:
                                               [NSString stringWithUTF8String: hb_audio_encoders[i].human_readable_name], keyAudioCodecName,
@@ -229,9 +227,9 @@ static NSMutableArray *masterBitRateArray = nil;
     BOOL shouldAdd;
     int currentMixdown;
 
+    unsigned long long channelLayout = [[track objectForKey: keyAudioInputChannelLayout] unsignedLongLongValue];
     unsigned int count = [masterMixdownArray count];
     int codecCodec = [[codec objectForKey: keyAudioCodec] intValue];
-    int channelLayout = [[track objectForKey: keyAudioInputChannelLayout] intValue];
     int theDefaultMixdown = hb_get_default_mixdown(codecCodec, channelLayout);
     int theBestMixdown = hb_get_best_mixdown(codecCodec, channelLayout, 0);
 

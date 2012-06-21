@@ -1,8 +1,11 @@
-/* $Id: common.c,v 1.15 2005/03/17 19:22:47 titer Exp $
+/* common.c
 
-   This file is part of the HandBrake source code.
+   Copyright (c) 2003-2012 HandBrake Team
+   This file is part of the HandBrake source code
    Homepage: <http://handbrake.fr/>.
-   It may be used under the terms of the GNU General Public License. */
+   It may be used under the terms of the GNU General Public License v2.
+   For full terms see the file COPYING file or visit http://www.gnu.org/licenses/gpl-2.0.html
+ */
 
 #include <stdarg.h>
 #include <time.h>
@@ -707,80 +710,62 @@ float hb_get_default_audio_compression( uint32_t codec )
     return compression;
 }
 
-int hb_get_best_mixdown( uint32_t codec, int layout, int mixdown )
+int hb_get_best_mixdown(uint32_t codec, uint64_t layout, int mixdown)
 {
-
     int best_mixdown;
-    
+
     if (codec & HB_ACODEC_PASS_FLAG)
     {
-        // Audio pass-thru.  No mixdown.
+        // Audio passthrough, no mixdown
         return HB_AMIXDOWN_NONE;
     }
-    switch (layout & HB_INPUT_CH_LAYOUT_DISCRETE_NO_LFE_MASK)
+    else if ((layout & AV_CH_LAYOUT_5POINT1) == AV_CH_LAYOUT_5POINT1 ||
+             (layout & AV_CH_LAYOUT_5POINT1_BACK) == AV_CH_LAYOUT_5POINT1_BACK)
     {
-        // mono input
-        case HB_INPUT_CH_LAYOUT_MONO:
-            best_mixdown = HB_AMIXDOWN_MONO;
-            break;
-
-        // Dolby Pro Logic (a.k.a. Dolby Surround), 4.0 channels (matrix-encoded)
-        // The A52 flags don't allow for a way to distinguish between DPL1 and
-        // DPL2 on a DVD so we always assume a DPL1 source for A52_DOLBY.
-        case HB_INPUT_CH_LAYOUT_DOLBY:
-        // 3 or 4 discrete channels
-        // case HB_INPUT_CH_LAYOUT_3F:   // FIXME: can it be downmixed to Dolby?
-        // case HB_INPUT_CH_LAYOUT_2F1R: // FIXME: can it be downmixed to Dolby?
-        case HB_INPUT_CH_LAYOUT_2F2R:
-        case HB_INPUT_CH_LAYOUT_3F1R:
-            // a52dec and libdca can't upmix to 6ch, 
-            // so we must downmix these.
-            // libdca only supports DPLII if the source is 3F2R to begin with
-            best_mixdown = HB_AMIXDOWN_DOLBY;
-            break;
-
-        // 5 to 8 discrete channels
-        case HB_INPUT_CH_LAYOUT_4F2R:
-        case HB_INPUT_CH_LAYOUT_3F4R:
-        case HB_INPUT_CH_LAYOUT_3F2R:
-            if (!(layout & HB_INPUT_CH_LAYOUT_HAS_LFE))
-            {
-                // we don't do 5-channel discrete
-                // a52dec and libdca can't upmix to 6ch, 
-                // so we must downmix this.
-                best_mixdown = HB_AMIXDOWN_DOLBYPLII;
-            }
-            else
-            {
-                switch (codec)
-                {
-                    case HB_ACODEC_LAME:
-                    case HB_ACODEC_FFAAC:
-                        best_mixdown = HB_AMIXDOWN_DOLBYPLII;
-                        break;
-
-                    default:
-                        best_mixdown = HB_AMIXDOWN_6CH;
-                        break;
-                }
-            }
-            break;
-
-        // stereo input or something not handled above
-        default:
-            // mono gets mixed up to stereo & more than stereo gets mixed down
-            best_mixdown = HB_AMIXDOWN_STEREO;
-            break;
+        // full 3F2R, possibly with additional channels, and an LFE
+        // limiting factor: liba52, libdca (can't upmix)
+        if (codec == HB_ACODEC_LAME || codec == HB_ACODEC_FFAAC)
+        {
+            best_mixdown = HB_AMIXDOWN_DOLBYPLII;
+        }
+        else
+        {
+            best_mixdown = HB_AMIXDOWN_6CH;
+        }
     }
+    else if ((layout & AV_CH_LAYOUT_5POINT0) == AV_CH_LAYOUT_5POINT0 ||
+             (layout & AV_CH_LAYOUT_5POINT0_BACK) == AV_CH_LAYOUT_5POINT0_BACK)
+    {
+        // full 3F2R, possibly with additional channels, but no LFE
+        // limiting factor: liba52, libdca (can't upmix)
+        // limiting factor: libdca (can only do DPL2 with 3F2R sources)
+        best_mixdown = HB_AMIXDOWN_DOLBYPLII;
+    }
+    else if(layout == AV_CH_LAYOUT_STEREO)
+    {
+        // limiting factor: no Dolby Surround for Stereo sources
+        best_mixdown = HB_AMIXDOWN_STEREO;
+    }
+    else if(av_get_channel_layout_nb_channels(layout) == 1)
+    {
+        // only one channel, not much point in upmixing
+        best_mixdown = HB_AMIXDOWN_MONO;
+    }
+    else
+    {
+        // everything else, including Dolby (AV_CH_LAYOUT_STEREO_DOWNMIX)
+        best_mixdown = HB_AMIXDOWN_DOLBY;
+    }
+
     // return the best that is not greater than the requested mixdown
     // 0 means the caller requested the best available mixdown
-    if( best_mixdown > mixdown && mixdown > 0 )
+    if (best_mixdown > mixdown && mixdown > 0)
         best_mixdown = mixdown;
-    
+
     return best_mixdown;
 }
 
-int hb_get_default_mixdown( uint32_t codec, int layout )
+int hb_get_default_mixdown(uint32_t codec, uint64_t layout)
 {
     int mixdown;
     switch (codec)
@@ -796,7 +781,7 @@ int hb_get_default_mixdown( uint32_t codec, int layout )
             break;
     }
     // return the best available mixdown up to the selected default
-    return hb_get_best_mixdown( codec, layout, mixdown );
+    return hb_get_best_mixdown(codec, layout, mixdown);
 }
 
 /**********************************************************************

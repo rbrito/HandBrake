@@ -1,7 +1,11 @@
-﻿/*  SubtitleType.cs $
-    This file is part of the HandBrake source code.
-    Homepage: <http://handbrake.fr>.
-    It may be used under the terms of the GNU General Public License. */
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="SubtitleType.cs" company="HandBrake Project (http://handbrake.fr)">
+//   This file is part of the HandBrake source code - It may be used under the terms of the GNU General Public License.
+// </copyright>
+// <summary>
+//   Subtitle Type.
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
 
 namespace HandBrake.ApplicationServices.Model.Encoding
 {
@@ -27,6 +31,8 @@ namespace HandBrake.ApplicationServices.Model.Encoding
         [Description("PGS")]
         PGS,
         [Description("Unknown")]
-        Unknown
+        Unknown,
+        [Description("Foreign Audio Search")]
+        ForeignAudioSearch, // Special Type for Foreign Audio Search
     }
 }

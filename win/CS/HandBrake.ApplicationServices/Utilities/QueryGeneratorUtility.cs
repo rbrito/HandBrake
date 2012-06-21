@@ -1,7 +1,11 @@
-﻿/*  QueryGeneratorUtility.cs $
-    This file is part of the HandBrake source code.
-    Homepage: <http://handbrake.fr/>.
-    It may be used under the terms of the GNU General Public License. */
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="QueryGeneratorUtility.cs" company="HandBrake Project (http://handbrake.fr)">
+//   This file is part of the HandBrake source code - It may be used under the terms of the GNU General Public License.
+// </copyright>
+// <summary>
+//   Generate a CLI Query for HandBrakeCLI
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
 
 namespace HandBrake.ApplicationServices.Utilities
 {
@@ -139,6 +143,13 @@ namespace HandBrake.ApplicationServices.Utilities
         private static string SourceQuery(EncodeTask task, int? duration, string preview)
         {
             string query = string.Empty;
+
+            // If we have a folder, strip it's trailing slash for the CLI.
+            // It behaves a bit funny with trailing \ in some cases.
+            if (task.Source.EndsWith("\\"))
+            {
+                task.Source = task.Source.TrimEnd('\\');
+            }
 
             query += string.Format(" -i \"{0}\"", task.Source);
             query += string.Format(" -t {0}", task.Title);
@@ -396,7 +407,10 @@ namespace HandBrake.ApplicationServices.Utilities
             switch (task.VideoEncoder)
             {
                 case VideoEncoder.FFMpeg:
-                    query += " -e ffmpeg";
+                    query += " -e ffmpeg4";
+                    break;
+                case VideoEncoder.FFMpeg2:
+                    query += " -e ffmpeg2";
                     break;
                 case VideoEncoder.X264:
                     query += " -e x264";
@@ -732,7 +746,7 @@ namespace HandBrake.ApplicationServices.Utilities
                         subCount++;
 
                         // Find --subtitle <string>
-                        if (item.Track.Contains("Foreign Audio Search"))
+                        if (item.SourceTrack.SubtitleType == SubtitleType.ForeignAudioSearch)
                             itemToAdd = "scan";
                         else
                         {

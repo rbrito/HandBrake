@@ -7,12 +7,9 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-using System.IO;
-
 namespace HandBrake.ApplicationServices.Model.Encoding
 {
     using System;
-    using System.Windows.Forms;
 
     using Caliburn.Micro;
 
@@ -133,25 +130,6 @@ namespace HandBrake.ApplicationServices.Model.Encoding
         }
 
         /// <summary>
-        ///   Gets A ListViewItem Containing information about this subitlte
-        /// </summary>
-        [Obsolete("Used only for the old forms gui. Will be removed.")]
-        public ListViewItem ListView
-        {
-            get
-            {
-                var listTrack = new ListViewItem(this.Track);
-                listTrack.SubItems.Add(this.Forced ? "Yes" : "No");
-                listTrack.SubItems.Add(this.Burned ? "Yes" : "No");
-                listTrack.SubItems.Add(this.Default ? "Yes" : "No");
-                listTrack.SubItems.Add(this.SrtLang);
-                listTrack.SubItems.Add(this.SrtCharCode);
-                listTrack.SubItems.Add(this.SrtOffset.ToString());
-                return listTrack;
-            }
-        }
-
-        /// <summary>
         ///   Gets or sets SourceTrack.
         /// </summary>
         public Subtitle SourceTrack
@@ -176,7 +154,6 @@ namespace HandBrake.ApplicationServices.Model.Encoding
         ///   Gets or sets the SRT Character Code
         /// </summary>
         public string SrtCharCode { get; set; }
-
 
         /// <summary>
         ///   Gets or sets the SRT Filename

@@ -1,8 +1,11 @@
-/* $Id: declpcm.c,v 1.8 2005/11/04 14:44:01 titer Exp $
+/* declpcm.c
 
-   This file is part of the HandBrake source code.
+   Copyright (c) 2003-2012 HandBrake Team
+   This file is part of the HandBrake source code
    Homepage: <http://handbrake.fr/>.
-   It may be used under the terms of the GNU General Public License. */
+   It may be used under the terms of the GNU General Public License v2.
+   For full terms see the file COPYING file or visit http://www.gnu.org/licenses/gpl-2.0.html
+ */
 
 #include "hb.h"
 #include "downmix.h"
@@ -48,11 +51,12 @@ hb_work_object_t hb_declpcm =
 
 static const int hdr2samplerate[] = { 48000, 96000, 44100, 32000 };
 static const int hdr2samplesize[] = { 16, 20, 24, 16 };
-static const int hdr2layout[] = {
-        HB_INPUT_CH_LAYOUT_MONO,   HB_INPUT_CH_LAYOUT_STEREO,
-        HB_INPUT_CH_LAYOUT_2F1R,   HB_INPUT_CH_LAYOUT_2F2R,
-        HB_INPUT_CH_LAYOUT_3F2R,   HB_INPUT_CH_LAYOUT_4F2R,
-        HB_INPUT_CH_LAYOUT_STEREO, HB_INPUT_CH_LAYOUT_STEREO,
+static const uint64_t hdr2layout[] =
+{
+    AV_CH_LAYOUT_MONO,    AV_CH_LAYOUT_STEREO,
+    AV_CH_LAYOUT_2_1,     AV_CH_LAYOUT_2_2,
+    AV_CH_LAYOUT_5POINT0, AV_CH_LAYOUT_2_2|AV_CH_FRONT_LEFT_OF_CENTER|AV_CH_FRONT_RIGHT_OF_CENTER,
+    AV_CH_LAYOUT_STEREO,  AV_CH_LAYOUT_STEREO,
 };
 
 static void lpcmInfo( hb_work_object_t *w, hb_buffer_t *in )

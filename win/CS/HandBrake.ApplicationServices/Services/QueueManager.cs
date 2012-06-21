@@ -1,7 +1,12 @@
-﻿/*  QueueManager.cs $
-    This file is part of the HandBrake source code.
-    Homepage: <http://handbrake.fr>.
-    It may be used under the terms of the GNU General Public License. */
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="QueueManager.cs" company="HandBrake Project (http://handbrake.fr)">
+//   This file is part of the HandBrake source code - It may be used under the terms of the GNU General Public License.
+// </copyright>
+// <summary>
+//   The Queue Manager.
+//   Thread Safe.
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
 
 namespace HandBrake.ApplicationServices.Services
 {
@@ -18,6 +23,7 @@ namespace HandBrake.ApplicationServices.Services
     using HandBrake.ApplicationServices.Exceptions;
     using HandBrake.ApplicationServices.Model;
     using HandBrake.ApplicationServices.Services.Interfaces;
+    using HandBrake.ApplicationServices.Utilities;
 
     using EventArgs = System.EventArgs;
 
@@ -387,7 +393,7 @@ namespace HandBrake.ApplicationServices.Services
             string queries = string.Empty;
             foreach (QueueTask queueItem in this.queue)
             {
-                string qItem = queueItem.Query;
+                string qItem = QueryGeneratorUtility.GenerateQuery(new EncodeTask(queueItem.Task));
                 string fullQuery = '"' + Application.StartupPath + "\\HandBrakeCLI.exe" + '"' + qItem;
 
                 if (queries == string.Empty)

@@ -1,3 +1,12 @@
+/* hb.h
+
+   Copyright (c) 2003-2012 HandBrake Team
+   This file is part of the HandBrake source code
+   Homepage: <http://handbrake.fr/>.
+   It may be used under the terms of the GNU General Public License v2.
+   For full terms see the file COPYING file or visit http://www.gnu.org/licenses/gpl-2.0.html
+ */
+ 
 #ifndef HB_HB_H
 #define HB_HB_H
 
@@ -7,14 +16,6 @@ extern "C" {
 
 #include "project.h"
 #include "common.h"
-
-#ifdef __APPLE__
-#include <CoreServices/CoreServices.h> // for Gestalt
-#include <AudioToolbox/AudioToolbox.h>
-#include <dlfcn.h>
-#endif
-/* Whether the Core Audio HE-AAC encoder is available on the system. */
-int encca_haac_available();
 
 /* hb_init()
    Initializes a libhb session (launches his own thread, detects CPUs,

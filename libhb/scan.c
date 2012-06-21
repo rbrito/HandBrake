@@ -1,8 +1,11 @@
-/* $Id: scan.c,v 1.52 2005/11/25 15:05:25 titer Exp $
+/* scan.c
 
-   This file is part of the HandBrake source code.
+   Copyright (c) 2003-2012 HandBrake Team
+   This file is part of the HandBrake source code
    Homepage: <http://handbrake.fr/>.
-   It may be used under the terms of the GNU General Public License. */
+   It may be used under the terms of the GNU General Public License v2.
+   For full terms see the file COPYING file or visit http://www.gnu.org/licenses/gpl-2.0.html
+ */
 
 #include "hb.h"
 #include "hbffmpeg.h"
@@ -1069,19 +1072,17 @@ static void LookForAudio( hb_title_t * title, hb_buffer_t * b )
     audio->config.in.mode = info.mode;
 
     // update the audio description string based on the info we found
-    if( audio->config.in.channel_layout == HB_INPUT_CH_LAYOUT_DOLBY )
+    if (audio->config.in.channel_layout == AV_CH_LAYOUT_STEREO_DOWNMIX)
     {
-        strcat( audio->config.lang.description, " (Dolby Surround)" );
+        strcat(audio->config.lang.description, " (Dolby Surround)");
     }
-    else
+    else if (audio->config.in.channel_layout)
     {
-        int layout = audio->config.in.channel_layout;
-        char *desc = audio->config.lang.description +
-                        strlen( audio->config.lang.description );
-        sprintf( desc, " (%d.%d ch)",
-                 HB_INPUT_CH_LAYOUT_GET_DISCRETE_FRONT_COUNT(layout) +
-                     HB_INPUT_CH_LAYOUT_GET_DISCRETE_REAR_COUNT(layout),
-                 HB_INPUT_CH_LAYOUT_GET_DISCRETE_LFE_COUNT(layout) );
+        int lfe      = !!(audio->config.in.channel_layout & AV_CH_LOW_FREQUENCY);
+        int channels = av_get_channel_layout_nb_channels(audio->config.in.channel_layout);
+        char *desc   = audio->config.lang.description +
+                        strlen(audio->config.lang.description);
+        sprintf(desc, " (%d.%d ch)", channels - lfe, lfe);
     }
 
     hb_log( "scan: audio 0x%x: %s, rate=%dHz, bitrate=%d %s", audio->id,
