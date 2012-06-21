@@ -1,8 +1,11 @@
-/* $Id: ports.h,v 1.7 2005/10/15 18:05:03 titer Exp $
+/* ports.h
 
-   This file is part of the HandBrake source code.
+   Copyright (c) 2003-2012 HandBrake Team
+   This file is part of the HandBrake source code
    Homepage: <http://handbrake.fr/>.
-   It may be used under the terms of the GNU General Public License. */
+   It may be used under the terms of the GNU General Public License v2.
+   For full terms see the file COPYING file or visit http://www.gnu.org/licenses/gpl-2.0.html
+ */
 
 #ifndef HB_PORTS_H
 #define HB_PORTS_H
@@ -51,7 +54,7 @@ typedef struct hb_thread_s hb_thread_t;
 #elif defined( SYS_DARWIN )
 #  define HB_LOW_PRIORITY    0
 #  define HB_NORMAL_PRIORITY 31
-#elif defined( SYS_LINUX ) || defined( SYS_FREEBSD ) || defined ( SYS_SunOS )
+#elif defined( SYS_LINUX ) || defined( SYS_FREEBSD ) || defined ( SYS_SunOS ) || defined ( __FreeBSD_kernel__ )
 #  define HB_LOW_PRIORITY    0
 #  define HB_NORMAL_PRIORITY 0
 #elif defined( SYS_CYGWIN )

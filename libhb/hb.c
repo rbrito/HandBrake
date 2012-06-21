@@ -1,3 +1,12 @@
+/* hb.c
+
+   Copyright (c) 2003-2012 HandBrake Team
+   This file is part of the HandBrake source code
+   Homepage: <http://handbrake.fr/>.
+   It may be used under the terms of the GNU General Public License v2.
+   For full terms see the file COPYING file or visit http://www.gnu.org/licenses/gpl-2.0.html
+ */
+ 
 #include "hb.h"
 #include "hbffmpeg.h"
 #include <stdio.h>
@@ -194,94 +203,46 @@ hb_sws_get_context(int srcW, int srcH, enum PixelFormat srcFormat,
     return ctx;
 }
 
-int hb_ff_layout_xlat( int64_t ff_channel_layout, int channels )
+uint64_t hb_ff_layout_xlat(uint64_t ff_channel_layout, int nchannels)
 {
-    int hb_layout;
-
-    switch( ff_channel_layout )
+    uint64_t hb_layout = ff_channel_layout;
+    if (!hb_layout ||
+        av_get_channel_layout_nb_channels(hb_layout) != nchannels)
     {
-        case AV_CH_LAYOUT_MONO:
-            hb_layout = HB_INPUT_CH_LAYOUT_MONO;
-            break;
-        case AV_CH_LAYOUT_STEREO:
-        case AV_CH_LAYOUT_STEREO_DOWNMIX:
-            hb_layout = HB_INPUT_CH_LAYOUT_STEREO;
-            break;
-        case AV_CH_LAYOUT_SURROUND:
-            hb_layout = HB_INPUT_CH_LAYOUT_3F;
-            break;
-        case AV_CH_LAYOUT_4POINT0:
-            hb_layout = HB_INPUT_CH_LAYOUT_3F1R;
-            break;
-        case AV_CH_LAYOUT_2_2:
-        case AV_CH_LAYOUT_QUAD:
-            hb_layout = HB_INPUT_CH_LAYOUT_2F2R;
-            break;
-        case AV_CH_LAYOUT_5POINT0:
-        case AV_CH_LAYOUT_5POINT0_BACK:
-            hb_layout = HB_INPUT_CH_LAYOUT_3F2R;
-            break;
-        case AV_CH_LAYOUT_5POINT1:
-        case AV_CH_LAYOUT_5POINT1_BACK:
-            hb_layout = HB_INPUT_CH_LAYOUT_3F2R|HB_INPUT_CH_LAYOUT_HAS_LFE;
-            break;
-        case AV_CH_LAYOUT_7POINT0:
-            hb_layout = HB_INPUT_CH_LAYOUT_3F4R;
-            break;
-        case AV_CH_LAYOUT_7POINT1:
-            hb_layout = HB_INPUT_CH_LAYOUT_3F4R|HB_INPUT_CH_LAYOUT_HAS_LFE;
-            break;
-        default:
-            hb_layout = HB_INPUT_CH_LAYOUT_STEREO;
-            break;
-    }
-    // Now make sure the chosen layout agrees with the number of channels
-    // ffmpeg tells us there are.  It seems ffmpeg is sometimes confused
-    // about this. So we will make a best guess based on the number
-    // of channels.
-    int chans = HB_INPUT_CH_LAYOUT_GET_DISCRETE_COUNT( hb_layout );
-    if( ff_channel_layout && chans == channels )
-    {
-        return hb_layout;
-    }
-    if( !ff_channel_layout )
-    {
-        hb_log( "No channel layout reported by Libav; guessing one from channel count." );
-    }
-    else
-    {
-        hb_log( "Channels reported by Libav (%d) != computed layout channels (%d). Guessing layout from channel count.", channels, chans );
-    }
-    switch( channels )
-    {
-        case 1:
-            hb_layout = HB_INPUT_CH_LAYOUT_MONO;
-            break;
-        case 2:
-            hb_layout = HB_INPUT_CH_LAYOUT_STEREO;
-            break;
-        case 3:
-            hb_layout = HB_INPUT_CH_LAYOUT_3F;
-            break;
-        case 4:
-            hb_layout = HB_INPUT_CH_LAYOUT_3F1R;
-            break;
-        case 5:
-            hb_layout = HB_INPUT_CH_LAYOUT_3F2R;
-            break;
-        case 6:
-            hb_layout = HB_INPUT_CH_LAYOUT_3F2R|HB_INPUT_CH_LAYOUT_HAS_LFE;
-            break;
-        case 7:
-            hb_layout = HB_INPUT_CH_LAYOUT_3F4R;
-            break;
-        case 8:
-            hb_layout = HB_INPUT_CH_LAYOUT_3F4R|HB_INPUT_CH_LAYOUT_HAS_LFE;
-            break;
-        default:
-            hb_log( "Unsupported number of audio channels (%d).", channels );
-            hb_layout = 0;
-            break;
+        switch (nchannels)
+        {
+            // TODO: use av_get_default_channel_layout when available
+            case 1:
+                hb_layout = AV_CH_LAYOUT_MONO;
+                break;
+            case 2:
+                hb_layout = AV_CH_LAYOUT_STEREO;
+                break;
+            case 3:
+                hb_layout = AV_CH_LAYOUT_SURROUND;
+                break;
+            case 4:
+                hb_layout = AV_CH_LAYOUT_QUAD;
+                break;
+            case 5:
+                hb_layout = AV_CH_LAYOUT_5POINT0;
+                break;
+            case 6:
+                hb_layout = AV_CH_LAYOUT_5POINT1;
+                break;
+            case 7:
+                hb_layout = AV_CH_LAYOUT_5POINT1|AV_CH_BACK_CENTER;
+                break;
+            case 8:
+                hb_layout = AV_CH_LAYOUT_7POINT1;
+                break;
+            default:
+                // This will likely not sound very good ;)
+                hb_layout = AV_CH_LAYOUT_STEREO;
+                hb_error("hb_ff_layout_xlat: unsupported layout 0x%"PRIx64" with %d channels",
+                         ff_channel_layout, nchannels);
+                break;
+        }
     }
     return hb_layout;
 }
@@ -2061,57 +2022,4 @@ void hb_set_state( hb_handle_t * h, hb_state_t * s )
 hb_interjob_t * hb_interjob_get( hb_handle_t * h )
 {
     return h->interjob;
-}
-
-/************************************************************************
- * encca_haac_available()
- ************************************************************************
- * Returns whether the Core Audio HE-AAC encoder is available for use
- * on the system. Under 10.5, if the encoder is available, register it.
- * The registration is actually only performed on the first call.
- ************************************************************************/
-int encca_haac_available()
-{
-#ifdef __APPLE__
-    static int encca_haac_available = -1;
-
-    if (encca_haac_available != -1)
-        return encca_haac_available;
-
-    encca_haac_available = 0;
-
-    long minorVersion, majorVersion, quickTimeVersion;
-    Gestalt(gestaltSystemVersionMajor, &majorVersion);
-    Gestalt(gestaltSystemVersionMinor, &minorVersion);
-    Gestalt(gestaltQuickTime, &quickTimeVersion);
-
-    if (majorVersion > 10 || (majorVersion == 10 && minorVersion >= 6))
-    {
-        // OS X 10.6+ - ca_haac is available and ready to use
-        encca_haac_available = 1;
-    }
-    else if (majorVersion == 10 && minorVersion >= 5 && quickTimeVersion >= 0x07630000)
-    {
-        // OS X 10.5, QuickTime 7.6.3+ - register the component
-        ComponentDescription cd;
-        cd.componentType         = kAudioEncoderComponentType;
-        cd.componentSubType      = kAudioFormatMPEG4AAC_HE;
-        cd.componentManufacturer = kAudioUnitManufacturer_Apple;
-        cd.componentFlags        = 0;
-        cd.componentFlagsMask    = 0;
-        ComponentResult (*ComponentRoutine) (ComponentParameters * cp, Handle componentStorage);
-        void *handle = dlopen("/System/Library/Components/AudioCodecs.component/Contents/MacOS/AudioCodecs", RTLD_LAZY|RTLD_LOCAL);
-        if (handle)
-        {
-            ComponentRoutine = dlsym(handle, "ACMP4AACHighEfficiencyEncoderEntry");
-            if (ComponentRoutine)
-                if (RegisterComponent(&cd, ComponentRoutine, 0, NULL, NULL, NULL))
-                    encca_haac_available = 1;
-        }
-    }
-
-    return encca_haac_available;
-#else
-    return 0;
-#endif
 }

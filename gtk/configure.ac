@@ -36,21 +36,21 @@ AC_ARG_WITH(hb,
 if test  $hb_PATHSET = 1 ; then
     case ${with_hb} in
     /*)
-		CXXFLAGS="$CXXFLAGS -I$with_hb/libhb"
-		CFLAGS="$CFLAGS -I$with_hb/libhb"
+		CXXFLAGS="$CXXFLAGS -I$with_hb/libhb -I$with_hb/contrib/include"
+		CFLAGS="$CFLAGS -I$with_hb/libhb -I$with_hb/contrib/include"
 		LDFLAGS="$LDFLAGS -L$with_hb/libhb -L$with_hb/contrib/lib"
 		AC_SUBST(HB_DIR, "$with_hb")
         ;;
     *)
-		CXXFLAGS="$CXXFLAGS "'-I$(top_srcdir)/'"$with_hb/libhb"
-		CFLAGS="$CFLAGS "'-I$(top_srcdir)/'"$with_hb/libhb"
+		CXXFLAGS="$CXXFLAGS "'-I$(top_srcdir)/'"$with_hb/libhb "'-I$(top_srcdir)/'"$with_hb/contrib/include"
+		CFLAGS="$CXXFLAGS "'-I$(top_srcdir)/'"$with_hb/libhb "'-I$(top_srcdir)/'"$with_hb/contrib/include"
 		LDFLAGS="$LDFLAGS "'-L$(top_srcdir)/'"$with_hb/libhb "'-L$(top_srcdir)/'"$with_hb/contrib/lib"
 		AC_SUBST(HB_DIR, '$(top_srcdir)/'"$with_hb")
         ;;
     esac
 else
-	CXXFLAGS="$CXXFLAGS "'-I$(top_srcdir)/'"../libhb"
-	CFLAGS="$CFLAGS "'-I$(top_srcdir)/'"../libhb"
+	CXXFLAGS="$CXXFLAGS "'-I$(top_srcdir)/'"../libhb "'-I$(top_srcdir)/'"../contrib/include"
+	CFLAGS="$CXXFLAGS "'-I$(top_srcdir)/'"../libhb "'-I$(top_srcdir)/'"../contrib/include"
 	LDFLAGS="$LDFLAGS "'-L$(top_srcdir)/'"../libhb "'-L$(top_srcdir)/'"../contrib/lib"
 	AC_SUBST(HB_DIR, '$(top_srcdir)/'"..")
 fi
@@ -94,10 +94,15 @@ case $host in
 	mingw_flag=yes
     ;;
   *)
+    case "$host_os" in
+	linux*)
+	  pkg_gudev="gudev-1.0"
+	  ;;
+    esac
     if test "x$gst_disable" = "xyes" ; then
-	    GHB_PACKAGES="gtk+-2.0 >= 2.10 gthread-2.0 gio-2.0 libnotify dbus-glib-1 gudev-1.0"
+	    GHB_PACKAGES="gtk+-2.0 >= 2.10 gthread-2.0 gio-2.0 libnotify dbus-glib-1 $pkg_gudev"
     else
-	    GHB_PACKAGES="gtk+-2.0 >= 2.10 gthread-2.0 gstreamer-0.10 gstreamer-interfaces-0.10 gstreamer-video-0.10 gstreamer-pbutils-0.10 gio-2.0 libnotify dbus-glib-1 gudev-1.0"
+	    GHB_PACKAGES="gtk+-2.0 >= 2.10 gthread-2.0 gstreamer-0.10 gstreamer-interfaces-0.10 gstreamer-video-0.10 gstreamer-pbutils-0.10 gio-2.0 libnotify dbus-glib-1 $pkg_gudev"
     fi
 	mingw_flag=no
     ;;

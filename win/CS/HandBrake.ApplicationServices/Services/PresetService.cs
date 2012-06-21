@@ -1,7 +1,11 @@
-﻿/*  PresetService.cs $
-    This file is part of the HandBrake source code.
-    Homepage: <http://handbrake.fr>.
-    It may be used under the terms of the GNU General Public License. */
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="PresetService.cs" company="HandBrake Project (http://handbrake.fr)">
+//   This file is part of the HandBrake source code - It may be used under the terms of the GNU General Public License.
+// </copyright>
+// <summary>
+//   The preset service manages HandBrake's presets
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
 
 namespace HandBrake.ApplicationServices.Services
 {
@@ -112,7 +116,8 @@ namespace HandBrake.ApplicationServices.Services
         #region Public Methods
 
         /// <summary>
-        /// Add a new preset to the system
+        /// Add a new preset to the system.
+        /// Performs an Update if it already exists
         /// </summary>
         /// <param name="preset">
         /// A Preset to add
@@ -130,6 +135,11 @@ namespace HandBrake.ApplicationServices.Services
 
                 // Update the presets file
                 this.UpdatePresetFiles();
+                return true;
+            } 
+            else
+            {
+                this.Update(preset);
                 return true;
             }
 
@@ -149,9 +159,7 @@ namespace HandBrake.ApplicationServices.Services
             {
                 if (preset.Name == update.Name)
                 {
-                    preset.Query = update.Query;
                     preset.Task = update.Task;
-                    preset.CropSettings = update.CropSettings;
                     preset.UsePictureFilters = update.UsePictureFilters;
 
                     // Update the presets file
@@ -297,15 +305,11 @@ namespace HandBrake.ApplicationServices.Services
                             Regex r = new Regex("(:  )"); // Split on hyphens. 
                             string[] presetName = r.Split(line);
 
-                            bool pic = presetName[2].Contains("crop");
-
                             Preset newPreset = new Preset
                                 {
                                     Category = category,
                                     Name = presetName[0].Replace("+", string.Empty).Trim(),
-                                    Query = presetName[2],
                                     Version = this.userSettingService.GetUserSetting<string>(ASUserSettingConstants.HandBrakeVersion),
-                                    CropSettings = pic,
                                     Description = string.Empty, // Maybe one day we will populate this.
                                     IsBuildIn = true,
                                     UsePictureFilters = true,

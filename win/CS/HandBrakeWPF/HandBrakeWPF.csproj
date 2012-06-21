@@ -119,9 +119,17 @@
     </Compile>
     <Compile Include="Converters\Audio\AudioBitrateConverter.cs" />
     <Compile Include="Converters\Audio\AudioEncoderConverter.cs" />
+    <Compile Include="Converters\Audio\AudioQueueDisplayConverter.cs" />
     <Compile Include="Converters\BooleanToHiddenVisibilityConverter.cs" />
+    <Compile Include="Converters\Options\OptionsTabConverter.cs" />
     <Compile Include="Converters\Video\VideoEncoderConverter.cs" />
+    <Compile Include="Model\ShellWindow.cs" />
+    <Compile Include="Views\ShellView.xaml.cs">
+      <DependentUpon>ShellView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ViewModels\Interfaces\IShellViewModel.cs" />
     <Compile Include="ViewModels\Interfaces\ITitleSpecificViewModel.cs" />
+    <Compile Include="ViewModels\ShellViewModel.cs" />
     <Compile Include="ViewModels\TitleSpecificViewModel.cs" />
     <Compile Include="Views\TitleSpecificView.xaml.cs">
       <DependentUpon>TitleSpecificView.xaml</DependentUpon>
@@ -270,6 +278,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Views\ShellView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\TitleSpecificView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -343,10 +355,6 @@
     <Content Include="defaultsettings.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="releasenotes.html">
-      <SubType>Designer</SubType>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Resource Include="Views\Images\Refresh.ico" />
     <Resource Include="Views\Images\WarningSmall.png" />
     <Resource Include="Views\Images\Complete.png" />
@@ -403,10 +411,6 @@
     <ProjectReference Include="..\HandBrake.Interop\HandBrakeInterop\HandBrakeInterop.csproj">
       <Project>{F0A61F62-2C3B-4A87-AFF4-0C4256253DA1}</Project>
       <Name>HandBrakeInterop</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\HandBrakeCS.csproj">
-      <Project>{A2923D42-C38B-4B12-8CBA-B8D93D6B13A3}</Project>
-      <Name>HandBrakeCS</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup />

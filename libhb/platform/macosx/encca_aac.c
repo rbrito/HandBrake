@@ -1,6 +1,11 @@
-/* This file is part of the HandBrake source code.
- Homepage: <http://handbrake.fr/>.
- It may be used under the terms of the GNU General Public License. */
+/* encca_aac.c
+
+   Copyright (c) 2003-2012 HandBrake Team
+   This file is part of the HandBrake source code
+   Homepage: <http://handbrake.fr/>.
+   It may be used under the terms of the GNU General Public License v2.
+   For full terms see the file COPYING file or visit http://www.gnu.org/licenses/gpl-2.0.html
+ */
 
 #include "hb.h"
 #include "downmix.h"
@@ -274,16 +279,16 @@ int encCoreAudioInit( hb_work_object_t * w, hb_job_t * job, enum AAC_MODE mode )
     switch( audio->config.out.mixdown )
     {
         case HB_AMIXDOWN_MONO:
-            pv->layout = HB_INPUT_CH_LAYOUT_MONO;
+            pv->layout = AV_CH_LAYOUT_MONO;
             break;
         case HB_AMIXDOWN_STEREO:
         case HB_AMIXDOWN_DOLBY:
         case HB_AMIXDOWN_DOLBYPLII:
-            pv->layout = HB_INPUT_CH_LAYOUT_STEREO;
+            pv->layout = AV_CH_LAYOUT_STEREO;
             break;
         case HB_AMIXDOWN_6CH:
         default:
-            pv->layout = HB_INPUT_CH_LAYOUT_3F2R | HB_INPUT_CH_LAYOUT_HAS_LFE;
+            pv->layout = AV_CH_LAYOUT_5POINT1;
             break;
     }
 

@@ -1,7 +1,11 @@
-﻿/*  EncodeTask.cs $
-    This file is part of the HandBrake source code.
-    Homepage: <http://handbrake.fr>.
-    It may be used under the terms of the GNU General Public License. */
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="EncodeTask.cs" company="HandBrake Project (http://handbrake.fr)">
+//   This file is part of the HandBrake source code - It may be used under the terms of the GNU General Public License.
+// </copyright>
+// <summary>
+//   An Encode Task
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
 
 namespace HandBrake.ApplicationServices.Model
 {
@@ -456,6 +460,7 @@ namespace HandBrake.ApplicationServices.Model
         /// Gets or sets Duration.
         /// </summary>
         public int? PreviewDuration { get; set; }
+
         #endregion
 
         #region Helpers
@@ -480,6 +485,21 @@ namespace HandBrake.ApplicationServices.Model
                 return false;
             }
         }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether IsPreviewEncode.
+        /// </summary>
+        public bool IsPreviewEncode { get; set; }
+
+        /// <summary>
+        /// Gets or sets PreviewEncodeDuration.
+        /// </summary>
+        public int PreviewEncodeDuration { get; set; }
+
+        /// <summary>
+        /// Gets or sets PreviewEncodeStartAt.
+        /// </summary>
+        public string PreviewEncodeStartAt { get; set; }
         #endregion
     }
 }

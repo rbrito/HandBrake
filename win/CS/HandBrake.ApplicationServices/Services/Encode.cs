@@ -1,7 +1,11 @@
-/*  Encode.cs $
-    This file is part of the HandBrake source code.
-    Homepage: <http://handbrake.fr/>.
-    It may be used under the terms of the GNU General Public License. */
+// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="Encode.cs" company="HandBrake Project (http://handbrake.fr)">
+//   This file is part of the HandBrake source code - It may be used under the terms of the GNU General Public License.
+// </copyright>
+// <summary>
+//   Class which handles the CLI
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
 
 namespace HandBrake.ApplicationServices.Services
 {
@@ -17,6 +21,7 @@ namespace HandBrake.ApplicationServices.Services
     using HandBrake.ApplicationServices.Parsing;
     using HandBrake.ApplicationServices.Services.Base;
     using HandBrake.ApplicationServices.Services.Interfaces;
+    using HandBrake.ApplicationServices.Utilities;
 
     /// <summary>
     /// Class which handles the CLI
@@ -116,7 +121,16 @@ namespace HandBrake.ApplicationServices.Services
                 this.VerifyEncodeDestinationPath(currentTask);
 
                 string handbrakeCLIPath = Path.Combine(Application.StartupPath, "HandBrakeCLI.exe");
-                ProcessStartInfo cliStart = new ProcessStartInfo(handbrakeCLIPath, currentTask.Query)
+
+                // TODO tidy this code up, it's kinda messy.
+                string query = this.currentTask.Task.IsPreviewEncode
+                                   ? QueryGeneratorUtility.GeneratePreviewQuery(
+                                       new EncodeTask(this.currentTask.Task),
+                                       this.currentTask.Task.PreviewEncodeDuration,
+                                       this.currentTask.Task.PreviewEncodeStartAt)
+                                   : QueryGeneratorUtility.GenerateQuery(new EncodeTask(this.currentTask.Task));
+
+                ProcessStartInfo cliStart = new ProcessStartInfo(handbrakeCLIPath, query)
                 {
                     RedirectStandardOutput = true,
                     RedirectStandardError = enableLogging ? true : false,

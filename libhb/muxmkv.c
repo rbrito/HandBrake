@@ -1,8 +1,11 @@
-/* $Id:  $
+/* muxmkv.c
 
-   This file is part of the HandBrake source code.
+   Copyright (c) 2003-2012 HandBrake Team
+   This file is part of the HandBrake source code
    Homepage: <http://handbrake.fr/>.
-   It may be used under the terms of the GNU General Public License. */
+   It may be used under the terms of the GNU General Public License v2.
+   For full terms see the file COPYING file or visit http://www.gnu.org/licenses/gpl-2.0.html
+ */
 
 /* libmkv header */
 #include "libmkv.h"
@@ -283,14 +286,27 @@ static int MKVInit( hb_mux_object_t * m )
         // MKV lang codes should be ISO-639-2/B
         lang =  lang_for_code2( audio->config.lang.iso639_2 );
         track->language = lang->iso639_2b ? lang->iso639_2b : lang->iso639_2;
-        track->extra.audio.samplingFreq = (float)audio->config.out.samplerate;
-        if( audio->config.out.codec & HB_ACODEC_PASS_FLAG )
+        // sample rate
+        if ((audio->config.out.codec == HB_ACODEC_CA_HAAC) ||
+            (audio->config.out.codec == HB_ACODEC_AAC_PASS &&
+             audio->priv.config.extradata.length == 5))
         {
-            track->extra.audio.channels = HB_INPUT_CH_LAYOUT_GET_DISCRETE_COUNT( audio->config.in.channel_layout );
+            // For HE-AAC, write outputSamplingFreq too
+            // samplingFreq is half of outputSamplingFreq
+            track->extra.audio.outputSamplingFreq = (float)audio->config.out.samplerate;
+            track->extra.audio.samplingFreq = track->extra.audio.outputSamplingFreq / 2.;
         }
         else
         {
-            track->extra.audio.channels = hb_mixdown_get_discrete_channel_count( audio->config.out.mixdown );
+            track->extra.audio.samplingFreq = (float)audio->config.out.samplerate;
+        }
+        if (audio->config.out.codec & HB_ACODEC_PASS_FLAG)
+        {
+            track->extra.audio.channels = av_get_channel_layout_nb_channels(audio->config.in.channel_layout);
+        }
+        else
+        {
+            track->extra.audio.channels = hb_mixdown_get_discrete_channel_count(audio->config.out.mixdown);
         }
         mux_data->track = mk_createTrack(m->file, track);
         if( audio->config.out.codec == HB_ACODEC_VORBIS ||
@@ -344,7 +360,7 @@ static int MKVInit( hb_mux_object_t * m )
             case PGSSUB:
                 track->codecPrivate = NULL;
                 track->codecPrivateSize = 0;
-                track->codecID = "S_HDMV/PGS";
+                track->codecID = MK_SUBTITLE_PGS;
                 break;
             case SSASUB:
                 track->codecID = MK_SUBTITLE_SSA;

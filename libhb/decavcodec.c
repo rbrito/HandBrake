@@ -1,8 +1,11 @@
-/* $Id: decavcodec.c,v 1.6 2005/03/06 04:08:54 titer Exp $
+/* decavcodec.c
 
-   This file is part of the HandBrake source code.
+   Copyright (c) 2003-2012 HandBrake Team
+   This file is part of the HandBrake source code
    Homepage: <http://handbrake.fr/>.
-   It may be used under the terms of the GNU General Public License. */
+   It may be used under the terms of the GNU General Public License v2.
+   For full terms see the file COPYING file or visit http://www.gnu.org/licenses/gpl-2.0.html
+ */
 
 /* This module is Handbrake's interface to the ffmpeg decoder library
    (libavcodec & small parts of libavformat). It contains four Handbrake
@@ -211,24 +214,22 @@ static int decavcodecaInit( hb_work_object_t * w, hb_job_t * job )
     }
 
     // DTS: work around lack of 6.0/6.1 support in libhb
-    if( hb_ff_dts_disable_xch( pv->context ) )
+    if (hb_ff_dts_disable_xch(pv->context))
     {
-        hb_deep_log( 2, "decavcodecaInit: found DTS-ES, requesting DTS core" );
+        hb_deep_log(2, "decavcodecaInit: found DTS-ES, requesting DTS core");
     }
-    else if( ( !pv->context->channels || !pv->context->channel_layout ) &&
-             ( w->audio->config.in.codec == HB_ACODEC_DCA_HD ) &&
-             ( ( w->audio->config.in.channel_layout & ~HB_INPUT_CH_LAYOUT_HAS_LFE ) == HB_INPUT_CH_LAYOUT_3F2R ) )
+    else if ((!pv->context->channels || !pv->context->channel_layout) &&
+             (w->audio->config.in.codec == HB_ACODEC_DCA_HD) &&
+             ((w->audio->config.in.channel_layout & ~AV_CH_LOW_FREQUENCY) == AV_CH_LAYOUT_5POINT0))
     {
         /* XXX: when we are demuxing the stream ourselves, it seems we have no
          * channel count/layout info in the context until we decode audio for
          * the first time. If the scan info says the source is 5.0 or 5.1,
          * make sure XCh processing is disabled in Libav before decoding. */
         pv->context->request_channels = pv->context->channels =
-            HB_INPUT_CH_LAYOUT_GET_DISCRETE_COUNT( w->audio->config.in.channel_layout );
-        pv->context->channel_layout = AV_CH_LAYOUT_5POINT0;
-        if( w->audio->config.in.channel_layout & HB_INPUT_CH_LAYOUT_HAS_LFE )
-            pv->context->channel_layout |= AV_CH_LOW_FREQUENCY;
-        hb_deep_log( 2, "decavcodecaInit: scan detected DTS 5.0/5.1, disabling XCh processing" );
+            av_get_channel_layout_nb_channels(w->audio->config.in.channel_layout);
+        pv->context->channel_layout = w->audio->config.in.channel_layout;
+        hb_deep_log(2, "decavcodecaInit: scan detected DTS 5.0/5.1, disabling XCh processing");
     }
 
     if ( w->audio != NULL )

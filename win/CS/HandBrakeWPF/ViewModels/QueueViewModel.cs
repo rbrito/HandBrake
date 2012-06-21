@@ -280,6 +280,7 @@ namespace HandBrakeWPF.ViewModels
         public void RetryJob(QueueTask task)
         {
             task.Status = QueueItemStatus.Waiting;
+            this.queueProcessor.QueueManager.BackupQueue(null);
         }
 
         /// <summary>
@@ -302,7 +303,13 @@ namespace HandBrakeWPF.ViewModels
         /// </summary>
         public void Export()
         {
-            VistaSaveFileDialog dialog = new VistaSaveFileDialog { Filter = "HandBrake Queue Files (*.hbq)|*.hbq"};
+            VistaSaveFileDialog dialog = new VistaSaveFileDialog
+                {
+                    Filter = "HandBrake Queue Files (*.hbq)|*.hbq",
+                    OverwritePrompt = true,
+                    DefaultExt = ".hbq",
+                    AddExtension = true
+                };
             dialog.ShowDialog();
 
             this.queueProcessor.QueueManager.BackupQueue(dialog.FileName);
